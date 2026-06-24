@@ -1,5 +1,60 @@
 import numpy as np
 
+
+class DynamicKPIMonitor:
+    def __init__(self, T=72):
+        self.T = T
+        self.cud_trajectory = np.zeros(T)
+        self.ced_trajectory = np.zeros(T)
+        self.cvtd_trajectory = np.zeros(T)
+        self.cwi_trajectory = np.zeros(T)
+
+    def record_hour(self, t, unmet_demand_dict, deliveries_this_hour, active_vehicles_map, travel_times,
+                    ideal_travel_times, max_capacities, active_warehouses, structural_demand):
+
+        # 1. Cumulative Unmet Demand (CUD)
+        self.cud_trajectory[t] = sum(sum(supplies.values()) for supplies in unmet_demand_dict.values())
+
+        # 2. Cumulative Equity Deficit (CED)
+        service_ratios = []
+        for d in structural_demand:
+            delivered = sum(deliveries_this_hour.get(w, {}).get(d, {}).get(s, 0) for w in active_warehouses for s in
+                            structural_demand[d])
+            demand = sum(structural_demand[d].values())
+            ratio = delivered / demand if demand > 0 else 0.0
+            service_ratios.append(ratio)
+
+        max_ratio = max(service_ratios) if service_ratios else 0.0
+        min_ratio = min(service_ratios) if service_ratios else 0.0
+        er_t = min_ratio / max_ratio if max_ratio > 0 else 1.0
+        self.ced_trajectory[t] = 1.0 - er_t
+
+        # 3. Cumulative Vehicle Transit Delay (CVTD)
+        delay_sum = 0
+        for r, count in active_vehicles_map.items():
+            delay_sum += count * (travel_times.get(r, 0) - ideal_travel_times.get(r, 0))
+        self.cvtd_trajectory[t] = delay_sum
+
+        # 4. Cumulative Warehouse Inefficiency (CWI)
+        inefficiency_sum = 0
+        for w in active_warehouses:
+            if active_warehouses[w] == 1:  # If open
+                dispatched = sum(
+                    deliveries_this_hour.get(w, {}).get(d, {}).get(s, 0) for d in unmet_demand_dict for s in
+                    unmet_demand_dict[d])
+                cap = max_capacities.get(w, 1)
+                utilization = dispatched / cap if cap > 0 else 1.0
+                inefficiency_sum += (1.0 - utilization)
+        self.cwi_trajectory[t] = inefficiency_sum
+
+    def extract_totals(self):
+        return {
+            "CUD": np.sum(self.cud_trajectory),
+            "CED": np.sum(self.ced_trajectory),
+            "CVTD": np.sum(self.cvtd_trajectory),
+            "CWI": np.sum(self.cwi_trajectory)
+        }
+
 class EOC:
     def __init__(self, districts, warehouses, routes, initial_vehicles, time_window=72):
         """
@@ -35,6 +90,12 @@ class EOC:
         # --- SYSTEM CONSTANTS & SCENARIO THRESHOLDS ---
         self.A_max = 0.7  # Critical risk threshold (from research)
         self.travel_times = {} # Expected travel times {route_id: hours}
+
+        #KPI monitor
+        self.kpi_monitor = DynamicKPIMonitor(T=time_window)
+
+        #helper to track explicit live deliveries inside the hour loop
+        self.hourly_deliveries_registry = {}
 
     def dispatch(self, w, d, s, r, n, quantity):
         """

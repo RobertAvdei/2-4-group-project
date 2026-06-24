@@ -35,6 +35,9 @@ def split_demand(demand, splits):
             remaining_demand -= result[i]
     return result
 
+def extract_structural_demands(warehouses_list):
+    # Assuming warehouse ID is serving as the local district indicator for baseline demand
+    return {w.id: {"supplies": w.demand} for w in warehouses_list}
 
 if __name__ == "__main__":
     result = split_demand(100, 4)
