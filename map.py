@@ -93,9 +93,38 @@ def default_map():
 
 
     # roads[1].is_blocked = True
-    return map, warehouses, roads
+    return map, warehouses, roads, cities
 
 
 if __name__ == "__main__":
     map, warehouses, roads = default_map()
     map.show()
+
+if __name__ == "__main__":
+    from routing import find_optimal_route
+    
+    # Initialize the default map structure your group designed
+    test_map = default_map()
+    
+    start_pos = (5, 2) # Core City coordinate index from your map mapping
+    end_pos = (3, 3)   # Shelter coordinate index from your map mapping
+    
+    print("--- SIMULATING DEPLOYMENT RUN WITHOUT BLOCKAGES ---")
+    route = find_optimal_route(test_map, start_pos, end_pos)
+    print(f"Calculated Path: {route}")
+    
+    # Let's dynamically trigger an earthquake blockage on the computed path to test re-routing
+    if route and len(route) > 1:
+        block_coord = route[1]
+        print(f"\n[AFTERSHOCK SHOCKWAVE] Road at {block_coord} collapsed!")
+        
+        # Insert a blocked road segment directly onto that district tile
+        if test_map.area[block_coord[0]][block_coord[1]].road:
+            test_map.area[block_coord[0]][block_coord[1]].road.is_blocked = True
+        else:
+            from roads import Road
+            test_map.area[block_coord[0]][block_coord[1]].road = Road(id=999, is_blocked=True)
+            
+        print("\n--- RE-EVALUATING ALTERNATE PATH ---")
+        new_route = find_optimal_route(test_map, start_pos, end_pos)
+        print(f"New Adjusted Path around blockage: {new_route}")
