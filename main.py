@@ -106,10 +106,12 @@ def run_simulation(num_simulations):
         unmet_demand.append(calculate_unmet_demand(warehouses))
         road_status.append(calculate_road_status(roads))
 
-    # Optional print block to show robustness evaluation metrics on console
-    print(f"\n--- ROBUSTNESS ASSESSMENT TRAJECTORIES ({num_simulations} RUNS) ---")
-    print(f"Expected Cumulative Unmet Demand (Mean CUD): {np.mean(mc_cud_totals):.2f}")
-    print(f"Expected Cumulative Equity Deficit (Mean CED): {np.mean(mc_ced_totals):.2f}")
+    print(f"\n--- Dynamic KPIs Results ({num_simulations} RUNS) ---")
+    print(f"Expected Cumulative Unmet Demand (Mean CUD):     {np.mean(mc_cud_totals):.2f}")
+    print(f"Expected Cumulative Equity Deficit (Mean CED):    {np.mean(mc_ced_totals):.4f}")
+    print(f"Expected Vehicle Transit Delay (Mean CVTD):       {np.mean(mc_cvtd_totals):.2f} hours")
+    print(f"Expected Warehouse Inefficiency (Mean CWI):       {np.mean(mc_cwi_totals):.2f}")
+    #placehodler for the robustness index
 
     return unmet_demand, road_status
 

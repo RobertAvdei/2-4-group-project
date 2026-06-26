@@ -104,6 +104,8 @@ def trace_single_simulation():
     totals = eoc_agent.kpi_monitor.extract_totals()
     print(f"Final Integrated CUD Total: {totals['CUD']:.2f}")
     print(f"Final Integrated CED Total: {totals['CED']:.4f}")
+    #
+    #
     print("=======================================================\n")
 
 
