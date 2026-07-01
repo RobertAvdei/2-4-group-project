@@ -1,13 +1,19 @@
 import numpy as np
-from city import City,Shelter, create_cities
-from warehouses import Warehouse, create_warehouses
-from roads import Road, create_roads
+import random
+from city import City,Shelter
+from warehouses import Warehouse
+
+from roads import Road
 
 MAP_SIZE=20
 
 class Map:
     def __init__(self, map_size:int = MAP_SIZE):
         self.area=generate_empty_area(map_size)
+        self.warehouses: list[Warehouse] = []
+        self.roads: list[Road] = []
+        self.cities: list[City] = []
+        self.shelters: list[Shelter] = []
     
     def show(self):
         for y in self.area:
@@ -15,7 +21,44 @@ class Map:
             for district in y:
                 row.append(district.show_state())
             print('|','  '.join(row),'|')
+    def get_random_coordinates(self):
+        empty_roads:list[tuple[int, int]] = []
+        for y in self.area:
+            for district in y:
+                if district.is_empty():
+                    empty_roads.append(district.coordinates)
+        return random.choice(empty_roads)
 
+    def add(self, coordinates:tuple[int, int], has_city:bool= False, has_warehouse:bool= False, has_shelter:bool= False):
+        y, x = coordinates
+        road = Road(len(self.roads))
+        self.roads.append(road)
+        self.area[y][x].road = road
+        
+        if has_city:
+            city=City(len(self.cities))
+            self.cities.append(city)
+            self.area[y][x].city = city
+            
+        if has_warehouse:
+            warehouse=Warehouse(len(self.warehouses))
+            self.warehouses.append(warehouse)
+            self.area[y][x].warehouse = warehouse
+            
+        if has_shelter:
+            shelter=Shelter(len(self.shelters))
+            self.shelters.append(shelter)
+            self.area[y][x].shelter = shelter
+        
+    def add_warehouse(self, supplies, vehicles,coordinates:tuple[int, int] | None= None):
+        if coordinates:
+            y, x = coordinates
+        else:
+            y, x = self.get_random_coordinates()
+            
+        warehouse= Warehouse (len(self.warehouses), supplies,0, vehicles)
+        self.warehouses.append(warehouse)
+        self.area[y][x].warehouse = warehouse
 
 class District:
     def __init__(self, coordinates:tuple[int, int],
@@ -30,19 +73,32 @@ class District:
         self.city = city
         self.road = road
         self.shelter=shelter
-        
-    def show_state(self):
+    
+    def is_empty(self):
         if self.shelter:
-            return 'S'
+            return False
         if self.city:
-            return 'C'
+            return False
         if self.warehouse:
-            return 'W'
+            return False
         if self.road:
             if self.road.is_blocked:
-                return 'X'
-            return'+'
-        return ' '
+                return False
+            return True
+        return False
+    
+    def show_state(self):
+        if self.shelter:
+            return '\N{Tent}'
+        if self.city:
+            return '\N{House Building}'
+        if self.warehouse:
+            return '\N{Department Store}'
+        if self.road:
+            if self.road.is_blocked:
+                return 'X '
+            return'+ '
+        return '  '
 
 
 def generate_empty_area(map_size:int = MAP_SIZE):
@@ -55,56 +111,131 @@ def generate_empty_area(map_size:int = MAP_SIZE):
 
 
 def default_map():
-    map_size= 10
-    supplies = 100
-    vehicles = 10
-    nr_warehouses = 4
-    nr_roads = 20
-    nr_cities = 2
+    map_size= MAP_SIZE
     
-    map = Map(map_size)
-    warehouses = create_warehouses(nr_warehouses,supplies,vehicles)
-    roads = create_roads(nr_roads)
-    cities = create_cities(nr_cities)
+    default_map = Map(map_size)
 
-    map.area[2][4].city=cities[0]
-    map.area[2][4].road=roads[0]
+    # North Small Village
+    default_map.add((2,12),has_city=True)
     
-    map.area[3][3].shelter=Shelter(0)
-    map.area[3][3].road=roads[12]
-    map.area[3][4].road=roads[1]
+    # Center Road 1
+    default_map.add((1,11))
+    default_map.add((2,10))
+    default_map.add((3,9))
+    default_map.add((4,9))
+    default_map.add((5,8))
+    default_map.add((6,8))
+    default_map.add((7,7))
+    default_map.add((8,7))
+    default_map.add((9,7))
+    default_map.add((10,8))
+    default_map.add((11,8))
+    default_map.add((12,8))
+    default_map.add((13,8),has_city=True) # South Village
     
-    map.area[4][3].road=roads[2]
-    map.area[4][4].road=roads[3]
-    map.area[4][5].road=roads[4]
+    # Center Road 2
+    default_map.add((3,11))
+    default_map.add((4,11))
+    default_map.add((5,11))
+    default_map.add((6,11))
+    default_map.add((7,10))
+    default_map.add((8,10))
+    default_map.add((8,9),has_city=True) # Center Village
+    default_map.add((8,8))
+    default_map.add((9,11))
+    default_map.add((10,11))
+    default_map.add((11,12))
+    default_map.add((12,12))
+    # South Road
+    default_map.add((18,14))
+    default_map.add((17,13))
+    default_map.add((18,12))
+    default_map.add((17,11))
+    default_map.add((16,11))
+    default_map.add((15,10))
+    default_map.add((14,9))
+    default_map.add((13,9))
+    default_map.add((14,7))
+    default_map.add((15,6))
+    default_map.add((16,5))
+    default_map.add((16,4))
+    default_map.add((16,3))
     
-    map.area[5][2].city=cities[1]
-    map.area[5][2].road=roads[5]
-    map.area[5][3].road=roads[6]
-    map.area[5][4].road=roads[7]
-    map.area[5][5].road=roads[8]
-    map.area[5][6].warehouse=warehouses[0]
-    map.area[5][6].road=roads[9]
-
-    map.area[6][3].road=roads[10]
+    # West Big City
+    default_map.add((15,2),has_city=True)
+    default_map.add((15,1),has_city=True)
+    default_map.add((14,2),has_city=True)
+    default_map.add((14,1),has_city=True)
     
-    map.area[7][3].warehouse=warehouses[0]
-    map.area[7][3].road=roads[11]
-
+    # West Road 1
+    default_map.add((13,2))
+    default_map.add((12,1))
+    default_map.add((11,0))
+    default_map.add((10,1))
+    default_map.add((9,1))
+    default_map.add((8,1))
+    default_map.add((7,2))
+    default_map.add((6,3))
+    default_map.add((6,4),has_city=True) # West Small Village 
+    default_map.add((6,5))
+    default_map.add((7,6))
+    
+    # West Road 2
+    default_map.add((13,3))
+    default_map.add((12,4))
+    default_map.add((11,4))
+    default_map.add((10,5))
+    default_map.add((9,4))
+    default_map.add((8,4))
+    default_map.add((7,4))
+    # East road
+    default_map.add((2,13))
+    default_map.add((3,14))
+    default_map.add((4,13))
+    default_map.add((5,13))
+    default_map.add((6,14))
+    default_map.add((6,15))
+    default_map.add((7,16))
+    default_map.add((8,17))
+    default_map.add((9,16))
+    default_map.add((10,15))
+    default_map.add((11,15))
+    default_map.add((12,15))
+    default_map.add((13,14))
+    default_map.add((13,13))
+    default_map.add((14,13))
+    default_map.add((15,14))
+    default_map.add((16,15))
+    
+    #South-East Big city
+    default_map.add((17,15),has_city=True)
+    default_map.add((17,16),has_city=True)
+    default_map.add((17,17),has_city=True)
+    default_map.add((18,15),has_city=True)
+    default_map.add((18,16),has_city=True)
+    default_map.add((18,17),has_city=True)
+    
 
     # roads[1].is_blocked = True
-    return map, warehouses, roads, cities
+    return default_map
 
+# TODO
+def dynamic_map():
+    pass
 
 if __name__ == "__main__":
-    map, warehouses, roads = default_map()
+    from warehouses_utils import create_warehouses
+    supplies=100
+    vehicles = 12
+    
+    map= default_map()
+    create_warehouses(4,supplies,vehicles, map)
     map.show()
 
 if __name__ == "__main__":
     from routing import find_optimal_route
-    
     # Initialize the default map structure your group designed
-    test_map = default_map()
+    test_map= default_map()
     
     start_pos = (5, 2) # Core City coordinate index from your map mapping
     end_pos = (3, 3)   # Shelter coordinate index from your map mapping
@@ -120,7 +251,7 @@ if __name__ == "__main__":
         
         # Insert a blocked road segment directly onto that district tile
         if test_map.area[block_coord[0]][block_coord[1]].road:
-            test_map.area[block_coord[0]][block_coord[1]].road.is_blocked = True
+            test_map.area[block_coord[0]][block_coord[1]].road.is_blocked = True # type: ignore
         else:
             from roads import Road
             test_map.area[block_coord[0]][block_coord[1]].road = Road(id=999, is_blocked=True)

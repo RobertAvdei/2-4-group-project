@@ -3,7 +3,7 @@ from map import default_map, Map, District
 from roads import Road
 from routing import find_optimal_route, heuristic
 
-def print_visual_map(simulation_map: Map, highlighted_path: list[tuple[int, int]] = None):
+def print_visual_map(simulation_map: Map, highlighted_path: list[tuple[int, int]]| None = None):
     """
     Renders the terminal map layout while overlaying the path calculated by the router.
     """
@@ -31,11 +31,11 @@ def run_comprehensive_test():
     print("=========================================\n")
     
     # Unpack default map metrics
-    test_map, _, _, _ = default_map()
+    test_map= default_map()
     
     # Establish a start (Warehouse/City proximity) and destination (Shelter) point
-    start_node = (5, 2)
-    end_node = (3, 3)
+    start_node = (2, 12)
+    end_node = (17,15)
     
     print("[TEST 1] Rerouting Simulation on a Safe Open Map...")
     initial_path = find_optimal_route(test_map, start_node, end_node)
