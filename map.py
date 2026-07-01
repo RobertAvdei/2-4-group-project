@@ -96,35 +96,77 @@ def default_map():
     return map, warehouses, roads, cities
 
 
+# if __name__ == "__main__":
+#     map, warehouses, roads = default_map()
+#     map.show()
+
 if __name__ == "__main__":
-    map, warehouses, roads = default_map()
-    map.show()
+    # Unpack all 4 values properly by adding a placeholder '_' for the cities variable
+    simulation_map, warehouses, roads, _ = default_map()
+    
+    # Render the full grid map visually in the terminal
+    simulation_map.show()
+
+# if __name__ == "__main__":
+#     from routing import find_optimal_route
+    
+#     # Initialize the default map structure your group designed
+#     test_map = default_map()
+    
+#     start_pos = (5, 2) # Core City coordinate index from your map mapping
+#     end_pos = (3, 3)   # Shelter coordinate index from your map mapping
+    
+#     print("--- SIMULATING DEPLOYMENT RUN WITHOUT BLOCKAGES ---")
+#     route = find_optimal_route(test_map, start_pos, end_pos)
+#     print(f"Calculated Path: {route}")
+    
+#     # Let's dynamically trigger an earthquake blockage on the computed path to test re-routing
+#     if route and len(route) > 1:
+#         block_coord = route[1]
+#         print(f"\n[AFTERSHOCK SHOCKWAVE] Road at {block_coord} collapsed!")
+        
+#         # Insert a blocked road segment directly onto that district tile
+#         if test_map.area[block_coord[0]][block_coord[1]].road:
+#             test_map.area[block_coord[0]][block_coord[1]].road.is_blocked = True
+#         else:
+#             from roads import Road
+#             test_map.area[block_coord[0]][block_coord[1]].road = Road(id=999, is_blocked=True)
+            
+#         print("\n--- RE-EVALUATING ALTERNATE PATH ---")
+#         new_route = find_optimal_route(test_map, start_pos, end_pos)
+#         print(f"New Adjusted Path around blockage: {new_route}")
 
 if __name__ == "__main__":
     from routing import find_optimal_route
     
-    # Initialize the default map structure your group designed
-    test_map = default_map()
+    # 1. Unpack all 4 values properly so simulation_map gets the actual Map object
+    simulation_map, warehouses, roads, _ = default_map()
     
-    start_pos = (5, 2) # Core City coordinate index from your map mapping
-    end_pos = (3, 3)   # Shelter coordinate index from your map mapping
+    print("--- EMERGENCY REACTION NETWORK MATRIX LAYOUT ---")
+    simulation_map.show()
+    print("\n------------------------------------------------")
+    
+    # Coordinates based on your printed map locations
+    start_pos = (5, 2)  # Starting location
+    end_pos = (3, 3)    # Target shelter
     
     print("--- SIMULATING DEPLOYMENT RUN WITHOUT BLOCKAGES ---")
-    route = find_optimal_route(test_map, start_pos, end_pos)
+    # Pass the correctly unpacked simulation_map here
+    route = find_optimal_route(simulation_map, start_pos, end_pos)
     print(f"Calculated Path: {route}")
     
-    # Let's dynamically trigger an earthquake blockage on the computed path to test re-routing
+    # 2. Let's dynamically test an aftershock blockage on the computed path
     if route and len(route) > 1:
         block_coord = route[1]
         print(f"\n[AFTERSHOCK SHOCKWAVE] Road at {block_coord} collapsed!")
         
-        # Insert a blocked road segment directly onto that district tile
-        if test_map.area[block_coord[0]][block_coord[1]].road:
-            test_map.area[block_coord[0]][block_coord[1]].road.is_blocked = True
+        # Inject a blocked road object directly onto that cell
+        if simulation_map.area[block_coord[0]][block_coord[1]].road:
+            simulation_map.area[block_coord[0]][block_coord[1]].road.is_blocked = True
         else:
             from roads import Road
-            test_map.area[block_coord[0]][block_coord[1]].road = Road(id=999, is_blocked=True)
+            simulation_map.area[block_coord[0]][block_coord[1]].road = Road(id=999, is_blocked=True)
             
         print("\n--- RE-EVALUATING ALTERNATE PATH ---")
-        new_route = find_optimal_route(test_map, start_pos, end_pos)
+        new_route = find_optimal_route(simulation_map, start_pos, end_pos)
         print(f"New Adjusted Path around blockage: {new_route}")
