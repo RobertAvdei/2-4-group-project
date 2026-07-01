@@ -61,8 +61,9 @@ def find_optimal_route(simulation_map: Map, start: tuple[int, int], end: tuple[i
                 
             district: District = simulation_map.area[neighbor[0]][neighbor[1]]
             
-            # 2. Blockage Constraint check: If there is a road here and it's blocked, skip it
-            if district.road and district.road.is_blocked:
+            # 2. Blockage Constraint check: 
+            # The tile MUST have a road to be drivable. If there is no road, OR if the road is blocked, skip it.
+            if not district.road or district.road.is_blocked:
                 continue
                 
             # Dynamic Step Cost evaluation based on vector geometry
